@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mybatis.mapper.OrderMapper" >
+	
+	<!-- 
+		********
+		1 对 1 查询建议使用 resultType
+		********
+	 -->
+	
+	<!-- type 为主类，即A类包含了B类作为属性，则type就写A类 -->
+	<resultMap type="Orders" id="orderUserResultMap">
+		<!-- 
+			id 和 result 这两个标签是映射到 Orders 中去的 
+			如果有多个字段决定id唯一，则写多个id标签
+		-->
+		<id column="id" property="id"/>
+		<result column="order_number" property="order_number"/>
+		<result column="user_id" property="user_id"/>
+
+		<!-- 
+			用于映射单个关联对象
+			property: 将关联信息映射到哪个属性
+			javaType: 属性映射的类型
+		 -->
+		<association property="user" javaType="com.mybatis.bean.User">
+			<id column="user_id" property="id"/>
+			<result column="username" property="username"/>
+			<result column="birthday" property="birthday"/>
+		</association>
+	</resultMap>	
+
+
+	<!-- 
+		extends： 继承上一个resultMap, 公用相同属性
+	 -->
+	<resultMap type="Orders" id="orderUserDetailResultMap" extends="orderUserResultMap">
+
+		<!-- 
+			collection： 用于映射集合对象
+			property: 将集合信息映射到哪个属性
+			ofType: 这个集合对象的类型，也就是<>泛型
+		 -->
+		<collection property="orderdetails" ofType="com.mybatis.bean.Orderdetail">
+			<id column="order_detail_id" property="id"/>
+			<result column="item_id" property="item_id"/>
+			<result column="item_num" property="item_num"/>
+			<result column="item_price" property="item_price"/>
+		</collection>
+
+	</resultMap>	
+
+	<!-- 
+		1 对 1 查询
+	 -->
+	<select id="findOrderUserList" resultType="OrderUserCustom">
+		select 
+			o.id,
+			o.order_number,
+			o.user_id,
+			u.username,
+			u.birthday
+		from 
+			orders o 
+		inner join 
+			user u 
+		on 
+			o.user_id = u.id
+	</select>
+
+	<select id="findOrderUserListByResultMap" resultMap="orderUserResultMap">
+		select 
+			o.id,
+			o.order_number,
+			o.user_id,
+			u.username,
+			u.birthday
+		from 
+			orders o 
+		inner join 
+			user u 
+		on 
+			o.user_id = u.id
+	</select>
+	
+	<!-- 
+		1 对 多 查询
+	 -->
+	 <select id="findOrderItemsList" resultMap="orderUserDetailResultMap">
+		 select 
+				o.id,
+				o.order_number,
+				o.user_id,
+				u.username,
+				u.birthday,
+				od.item_id,
+				od.item_num,
+				od.item_price,
+				od.id as order_detail_id
+			from 
+				orders o 
+			inner join 
+				user u 
+			on 
+				o.user_id = u.id 
+			left join 
+				orderdetail od 
+			on 
+				o.id = od.orders_id
+	</select>
+</mapper>
